@@ -106,20 +106,37 @@
 * Create    :   local_file  :   Create 3 local_files, using one resource block, called "first.txt", "second.txt", "third.txt"
 * Output    :   local_file  :   Output the path of the file called "second.txt"
 
-
 ### A) Acceptance
 * Given that i have run terraform apply
 * When i take a look at the directory
 * 
 
-## 7) Locals
+## B) Locals
 * do the above, but save the values for the file names into the locals block
 
-## b) lifecyles
+############# ############# ############# #############
+# MISSING ONE MORE RELEVENT THING         #############
+############# ############# ############# #############
+
+could tf vars be a relevent thing?
+
+====================================================================
+
+//Generate a bunch of stuff
+//Use lifecycles to prevent values from changing
+//Use taint to re-create something
+
+## C) lifecyles
 * use the ignore_changes hook -> Would be useful
 * Create one set of files
 * up the value of the number created
 * then create more files, but have the second load have different values
+
+## c) taint
+* re-apply changes to a resource
+* taint a  resource
+terraform taint resourcen_type.resource_name 
+taint destroys and rebuilds a resource, on the next apply
 
 ====================================================================
 
@@ -128,7 +145,3 @@ EXTRAS, THAT COULD BE DONE
 ## a) Provisioners
 * use a provisioner
 
-
-## c) taint
-* re-apply changes to a resource
-* taint a  resource
