@@ -1,4 +1,14 @@
-========== Interesting =============================================================
+========== Anki card only =============================================================
+Stuff that can only be made into anki cards, don't make interesting katas
+
+version contraints:
+version = ">= 1.2.0, < 2.0.0"
+
+set     : A list of unique values
+list    : A list of the same types
+tuple   : A list of mixed types
+
+
 
 ========== Might be useful =========================================================
 
@@ -70,8 +80,6 @@ variable "ami" {
     architecture = string
   })
 }
-
-
 
 ---
 
@@ -318,9 +326,7 @@ baz.txt
 
 file(path) => returns the contents of a file, as a string
 
-
 fileexists(path)
-
 
 > fileset(path.module, "files/*.txt")
 [
@@ -358,7 +364,6 @@ name   = tostring(try(local.raw_value.name, null))
 
 ---
 
-expressions: This is the terraform language in practise really
 terraform console
 
 list type
@@ -408,17 +413,8 @@ min([1,2,3]...) => expanding function arguments. Calls min with 1,2,3
 ternary:
 condition ? if_true : else_false
 
-
 [for s in var.list : upper(s)]
 
-The brackets around a for determines the returned type
-[ this is a list ]
-{ this is an object }
-
-
-{for s in var.list : s => upper(s)}
-
-{for key in var.list : key => upper(key)}
 
 //you can filter the list with an if
 [for s in var.list : upper(s) if s != ""]
@@ -459,9 +455,6 @@ set( ... ) => a list of unique values
 The any statement acts like c#'s var
 list(any) states that you've got a list of a type to be decided later
 
-version contraints:
-
-version = ">= 1.2.0, < 2.0.0"
 
 ---
 
@@ -477,9 +470,6 @@ sensitive = true, suppresses this
 
 variable arguments:
 default : declare a default value for a variable : Allows the option to be optional on a module level
-type    : declare the type of a variable
-description : custom description of a variable
-validation : A block for defining validation rules
 sensitive :  Limits Terraform UI output when the variable is used in configuration. 
 
 variable types:
@@ -496,19 +486,9 @@ more types:
     tuple([<type>])
 
 validation:
-variable "image_id" {
-  type        = string
-  description = "The id of the machine image (AMI) to use for the server."
-
-  validation {
-    condition     = length(var.image_id) > 4 && substr(var.image_id, 0, 4) == "ami-"
-    error_message = "The image_id value must be a valid AMI id, starting with \"ami-\"."
-  }
-}
 
 sensitive:
 if sensitive = true, terraform suppresses ui output that contains the value
-
 
 you can assign variables via a flag from the cli
 terraform apply -var="image_id=ami-abc123"
@@ -523,7 +503,6 @@ availability_zone_names = [
   "us-west-1c",
 ]
 
-
 files that are automatically loaded in:
 Files named exactly terraform.tfvars or terraform.tfvars.json.
 
@@ -532,6 +511,10 @@ $ export TF_VAR_image_id=ami-abc123
 $ terraform plan
 
 ----
+
+#################
+Resources
+#################
 
 resource blocks can use the depends_on meta argument
 if a resource block uses the depends on meta argument, reading of it's data source will be delayed
