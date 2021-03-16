@@ -159,7 +159,7 @@
 Deep structures:
 Main)       main.tf
 Module)     module/main.tf
-Sub mod)    module/submodules/sub_one/main.tf
+Sub mod)    submodule/main.tf
 
 output:
 output/prefix_0.txt
@@ -167,19 +167,55 @@ output/prefix_1.txt
 output/prefix_2.txt
 output/prefix_3.txt
 
-* structure :   sub_module  :   create the sub module module/submodule/main.tf
+## A) Create the sub_module:
+* structure :   sub_module  :   create the submodule/main.tf
 * variable  :   sub_module  :   file_content, the content of the generated files
 * variable  :   sub_module  :   the prefix for the files
-* create    :   sub_module  :   the generated files are in the directory "output", "output/file.txt"
+* output    :   sub_module  :   output the file data
+* create    :   sub_module  :   2x Files, the generated files are in the directory "output", "output/file.txt"
 
-* structure :   module      :   create the module
+* test  ->  run the sub_module, file_content = "test", prefix = "pre"
+* check ->  2 files generated, content = "test", names pre_0.txt, pre_1.txt
+* check ->  output -> [ file_1, file_2 ]
+
+## B) Create the module:
+
+* structure :   module      :   create the module directory
 * create    :   module      :   invoke the sub module twice, in 2 different blocks, with different content for each
-* output    :   module      :   output the files [module_a, module_b]
+* output    :   module      :   output the files = [ module_a.files, module_b.files ]
+
+* test  -> Output directory contains 4 files. 
+* output -> terraform output outputs [ [ file_0, file_1 ], [ file_0, file_1 ] ]
+
+## C) Invoke the module
 
 * structure :   main        :   create the top level main.tf
-* output    :   main        :   1) flatten the list, then splat it to use just output path
-* output    :   main        :   2) turn the flat list to generate an object { filename : content }
-* output    :   main        :   3) turn the flat list, into a list of just file names, without the directory
+* module    :   main        :   Invoke the module
+* output    :   main        :   output file_paths)      Flatten the list, then splat it to display only the full output path
+* output    :   main        :   output files_as_map)    Turn the flat list to generate a map { filename : content }
+* output    :   main        :   output just_names)      Turn the flat list, into a list of just file names, without the directory
+
+expected output:
+* file_paths = [
+  "output/FIRST_0.txt",
+  "output/FIRST_1.txt",
+  "output/SECOND_0.txt",
+  "output/SECOND_1.txt",
+]
+
+* files_as_map = {
+  "output/FIRST_0.txt" = "FIRST BLOCK"
+  "output/FIRST_1.txt" = "FIRST BLOCK"
+  "output/SECOND_0.txt" = "Second Block"
+  "output/SECOND_1.txt" = "Second Block"
+}
+
+* just_names = [
+  "FIRST_0.txt",
+  "FIRST_1.txt",
+  "SECOND_0.txt",
+  "SECOND_1.txt",
+]
 
 ====================================================================
 
