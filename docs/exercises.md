@@ -101,22 +101,26 @@
 3) Constraints, life cycles and tainting
 
 ## A) Variables With constraints
-type    : declare the type of a variable
-description : custom description of a variable
-validation : A block for defining validation rules
 
-* variable  :   number      :   number of files generated, must be a number, prevent non numbers and values greater than 4. output "Please put in less than 4" as the error
-* create    :   local_file  :   2x local_file, by using the above variable as the count
+* variable  :   number      :   number of files generated, must be a number, prevent non numbers and values greater than 4. output "Input no more than 4." as the error
+* test      :   tf apply    :   Try and input 15 as the file_count, expect => "Input no more than 4." as the result
+
+### B-A) Acceptance
+* Given i have run terraform apply
+* When i give it the value of 15 for the variable
+* I should see that i get the "Input no more than 4." error message.
+
+
+## B) Running it again, preventing changes
+
+* config    :   local_file  :   set the content to be "FIRST RUN"
 * config    :   local_file  :   prevent the files from having their content changed, on subsequent runs
+* create    :   tf apply    :   2x local_file, by using the above variable as the count
+* edit      :   local_file  :   change the content value to "SECOND RUN"
+* create    :   tf apply    :   Set the variable to 4
+* test      :   check       :   Check that the first 2 files have different content to the second two
 
-* test      :   tf apply    :   Try and input 15 as the file_count, expect => "Please put in less than 4" as the result
-
-
-## B) Running it again, with contraints
-
-* edit      :   local_file  :   change the content value
-* test      :   tf apply    :   Set the variable to 4
-
+### B-A) Acceptance
 * Given i have ran apply the first time
 * and set content to "FIRST RUN"
 * and provided 2 for file_count
@@ -130,9 +134,11 @@ validation : A block for defining validation rules
     * 2 with the content "SECOND RUN"
 
 ## C) Taint
+* config    :   local_file      :   Change the content to be "THIRD RUN"
 * taint     :   local_file[0]   :   Taint one of the files with the "FIRST RUN" content
 * test      :   tf apply        :   Check that the content of the first file is now "SECOND RUN", not "FIRST RUN"
 
+### C-A) Acceptance
 * Given that i have tainted a file
 * When i run tf apply
 * I can see that the tainted file's values have changed
@@ -143,6 +149,7 @@ validation : A block for defining validation rules
 
 * test      :   local_file      :   Run apply again => Expect to get a prevent destroy error
 
+### D-A) Acceptance
 * Given that i have tainted the remaining file
 * when i run terraform apply
 * I receive an error, preventing destroy
