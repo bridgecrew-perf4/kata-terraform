@@ -58,51 +58,65 @@
 
 ## A) Using a module to generate files
 * Create    : Directory             :  The modules container
-* Create    : module.local_file     :  x2 files, content irrelevent 
+* Create    : module                :  x2 files, content irrelevent 
 * Output    : local_file.filename   :  x2 files, output their names to the calling module
 * Run       : From calling module   :  Run the module, from a parent main.tf, in the parent directory
 
-### A) Acceptance:
+### A-A) Acceptance:
 * Given that i have a module directory, and i'm in the directory above it
 * When i run terraform apply
 * I can see it generates 2 files:
     * file_0.txt
     * file_1.txt
 
+* Given that i have run terraform apply
+* When i run terraform output
+* I receive:
+    * file_one = "output/file_0.txt"
+    * file_two = "output/file_1.txt"
+
 ## B) using count to generate several files
 * Implement Count   :   module.local_files  :   Implement count, on one resource, to generate your two files
 * Create            :   local_file          :   Generate the files file_0.txt and file_1.txt
 * Output            :   local_file.filename :   Output the names of the 2 files, individually
 
-### B) Acceptance
+### B-A) Acceptance
 * Given i've run terraform apply
 * When i take a look at the generated outputs
 * I can see:
-    * file_one : file_0.txt
-    * file_two : file_1.txt
-
-* Given i've run terraform apply
-* When i take a look at the generated files
-* I can see:
-    * file_0.txt
-    * file_1.txt
+    * file_one = "output/file_0.txt"
+    * file_two = "output/file_1.txt"
 
 ## C) Using variables and outputs
-* Implement variable    :   module  :   Have a variable determine the number of generated files, call it file_count
-* Output                :   module  :   Output all filenames ( only ) together as an array
+* variable  :   module  :   Have a variable determine the number of generated files, call it file_count
+* Output    :   module  :   Output all filenames ( only ) together as an array
 
-### Acceptance:
+### C-A) Acceptance
 * Given that i've run terraform apply and set file_count to 4
 * When i run terraform output
 * I can see:
     output : [ "file_0.txt", "file_1.txt", "file_2.txt", "file_3.txt" ]
+
+## D) Implement that module:
+
+* Create    :   main.tf :   Create the top level main.tf
+* module    :   main.tf :   Invoke the /module
+* output    :   main.tf :   have the new main.tf, output the modules outputs
+* I can see:
+    output : [ "file_0.txt", "file_1.txt", "file_2.txt", "file_3.txt" ]
+
     
 ====================================================================
 3) Constraints, life cycles and tainting
 
 ## A) Variables With constraints
 
-* variable  :   number      :   number of files generated, must be a number, prevent non numbers and values greater than 4. output "Input no more than 4." as the error
+* variable  :   number      :   number of files generated, must :
+                                    * be a number 
+                                    * prevent non numbers 
+                                    * prevent values greater than 4. 
+                                    * output "Input no more than 4." as the error
+
 * test      :   tf apply    :   Try and input 15 as the file_count, expect => "Input no more than 4." as the result
 
 ### B-A) Acceptance
@@ -156,7 +170,7 @@
 
 ====================================================================
 
-# Submodules and layers:
+# 4) Submodules and layers:
 
 Directory structure
 Main)       main.tf
@@ -191,6 +205,12 @@ Sub mod)    submodule/main.tf
 * output    :   main        :   output file_paths)      Flatten the list, then splat it to display only the full output path
 * output    :   main        :   output files_as_map)    Turn the flat list to generate a map { filename : content }
 * output    :   main        :   output just_names)      Turn the flat list, into a list of just file names, without the directory
+
+## C-A) Acceptance:
+
+* Given i have run terraform apply
+* When i run terraform output
+* I get the following outputs:
 
 expected output:
 * file_paths = [
