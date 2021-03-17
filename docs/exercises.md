@@ -156,23 +156,19 @@
 
 ====================================================================
 
-Deep structures:
+# Submodules and layers:
+
+Directory structure
 Main)       main.tf
 Module)     module/main.tf
 Sub mod)    submodule/main.tf
-
-output:
-output/prefix_0.txt
-output/prefix_1.txt
-output/prefix_2.txt
-output/prefix_3.txt
 
 ## A) Create the sub_module:
 * structure :   sub_module  :   create the submodule/main.tf
 * variable  :   sub_module  :   file_content, the content of the generated files
 * variable  :   sub_module  :   the prefix for the files
 * output    :   sub_module  :   output the file data
-* create    :   sub_module  :   2x Files, the generated files are in the directory "output", "output/file.txt"
+* create    :   sub_module  :   2x Files, the generated files are in the directory "output", "output/prefix_fileindex.txt"
 
 * test  ->  run the sub_module, file_content = "test", prefix = "pre"
 * check ->  2 files generated, content = "test", names pre_0.txt, pre_1.txt
@@ -180,12 +176,13 @@ output/prefix_3.txt
 
 ## B) Create the module:
 
+* local     :   module      :   create a local variable, that's a map, containing the modules values
 * structure :   module      :   create the module directory
-* create    :   module      :   invoke the sub module twice, in 2 different blocks, with different content for each
+* create    :   module      :   invoke the sub module twice, using a for_each on the above local
 * output    :   module      :   output the files = [ module_a.files, module_b.files ]
 
 * test  -> Output directory contains 4 files. 
-* output -> terraform output outputs [ [ file_0, file_1 ], [ file_0, file_1 ] ]
+* output -> terraform output outputs [ [ prefix_one_0.txt, prefix_one_1.txt ], [ prefix_two_0.txt, prefix_two_1.txt ] ]
 
 ## C) Invoke the module
 

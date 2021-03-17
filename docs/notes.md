@@ -320,10 +320,6 @@ abspath => take a relative file path, convert it to absolute
 > dirname("foo/bar/baz.txt")
 foo/bar
 
-> basename("foo/bar/baz.txt")
-baz.txt
-
-
 file(path) => returns the contents of a file, as a string
 
 fileexists(path)
