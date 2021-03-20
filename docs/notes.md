@@ -1,25 +1,227 @@
-========== Anki card only =============================================================
-Stuff that can only be made into anki cards, don't make interesting katas
+# CLI
 
-version contraints:
-version = ">= 1.2.0, < 2.0.0"
+Show all resources made in the current project
+$ terraform state list
 
-set     : A list of unique values
-list    : A list of the same types
-tuple   : A list of mixed types
+Show the values for a particular resource
+$ terraform state show resource.name
+
+The terraform refresh command is used to reconcile the state Terraform knows about (via its state file) with the real-world infrastructure. This can be used to detect any drift from the last-known state, and to update the state file.
+
+$ terraform state mv
+// The example below renames the packet_device resource named worker to helper:
+$ terraform state mv 'packet_device.worker' 'packet_device.helper'
+
+The terraform state mv command is used to move items in a Terraform state. This command can move single resources, single instances of a resource, entire modules, and more. This command can also move items to a completely different state file, enabling efficient refactoring.
+
+The example below removes the packet_device resource named worker:
+$ terraform state rm 'packet_device.worker'
+
+$ terraform state replace-provider [options] FROM_PROVIDER_FQN TO_PROVIDER_FQN
+
+=======================================================
+
+$ terraform workspace list      : command is used to list all existing workspaces.
+$ terraform workspace select    : command is used to choose a different workspace to use for further operations.
+$ terraform workspace new       : command is used to create a new workspace.
+$ terraform workspace show      : command is used to output the current workspace.
+$ terraform workspace delete [OPTIONS] NAME [DIR]   : The terraform workspace delete command is used to delete an existing workspace.
+
+=========================================================
+
+$ terraform providers schema -json : Output the schema of the resources from a provider
+Useful for seeing the interfaces of stuff
+
+Env variables:
+
+export TF_LOG= : disable logging
+
+export TF_LOG=TRACE : Enable logging
+
+export TF_LOG_PATH=./terraform.log : tells the log where to persist
+
+export TF_INPUT=0 : Forces all commands to run with the -input=false flag set
+
+env variables can be used to set tf vars:
+export TF_VAR_region=us-west-1
+export TF_VAR_varname=value
+
+=========================================================
+
+you can set which args are added onto every run
+TF_CLI_ARGS : Adds a flag ( e.g. TF_CLI_ARGS onto the end of every command )
+
+$env:TF_CLI_ARGS_apply="--auto-approve" : Will add this, to approve only
+
+export TF_WORKSPACE=your_workspace
+
+$env:TF_LOG="TRACE"
 
 
+resource "my_resource" "name" {}
 
-========== Might be useful =========================================================
+$ terraform import my_resource.name resource_descriptor
 
-* Remote Tf state management
-    * how to setup
-    * what happens if the state changes, but the files aren't updated
-    * tf import
+---
 
-========== I don't think i care about this tbh =====================================
+# State
 
-========== General unsorted notes ==================================================
+data "terraform_remote_state" "vpc"
+allows for using remote state, not using backends
+
+via this, you have access to the OUTPUTS of remote state
+
+data "terraform_remote_state" "vpc" {
+  backend = "remote"
+
+  config = {
+    organization = "hashicorp"
+    workspaces = {
+      name = "vpc-prod"
+    }
+  }
+}
+
+# Terraform >= 0.12
+resource "aws_instance" "foo" {
+  # ...
+  subnet_id = data.terraform_remote_state.vpc.outputs.subnet_id
+}
+
+data "terraform_remote_state" "vpc" {
+  backend = "local"
+
+  config = {
+    path = "..."
+  }
+}
+
+terraform_remote_state.name.backend = "value" : Configure the backend for a config
+
+Remote state like this, is READONLY
+
+Backends determine where state is stored. For example, the local (default) backend stores state in a local JSON file on disk. 
+
+Workspaces:
+Workspaces are where your state is managed
+Each workspace has an associated backend
+the default backend is "local"
+
+Named workspaces allow conveniently switching between multiple instances of a single configuration within its single backend. They are convenient in a number of situations, but cannot solve all problems.
+
+A common use for multiple workspaces is to create a parallel, distinct copy of a set of infrastructure in order to test a set of changes before modifying the main production infrastructure.
+
+AzureRM : Azures' backend's name
+
+$ terraform workspace new name : Create a new work space
+
+$ terraform workspace select name : Select a terraform space
+
+value = "${terraform.workspace}" : Get access to the name of the current workspace
+
+$ terraform state pull : pull remote state and output it to stdout
+
+If supported by your backend, Terraform will lock your state for all operations that could write state. This prevents others from acquiring the lock and potentially corrupting your state.
+
+Backends determine only where the state is stored, the operations are run from the local machine
+
+//setup to use azurerm
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "StorageAccount-ResourceGroup"
+    storage_account_name = "abcd1234"
+    container_name       = "tfstate"
+    key                  = "prod.terraform.tfstate"
+  }
+}
+
+//Using a foreign backend:
+terraform init -backend-config="../../local_backend_config.tfvars" -backend-config="key=dev-rating.tfstate"
+
+In the .tfvars:
+resource_group_name = "rg-vitruvius"
+storage_account_name = "stvitruviusshared"
+container_name = "tfstate"
+
+
+---
+
+# Provisioners:
+
+provider : null - allows access to the null_resource
+null_resource : A resource that does nothing, good for provisioner practise
+
+Self : A provisioner can't refer to it's parent block, self does that
+
+resource "null_resource" "res"{
+    provisioner "local-exec"{
+        command = "echo $env:A >> file.txt"
+        interpreter = [ "powershell" , "-command" ]
+        environment = {
+            A = "beans"
+        }
+        working_dir = "place to be executed"
+    }
+}
+
+Where defined : Inside of any resource
+when ran : whenever the resource is created, changes to the provisioner are ignored until a recreate happens
+
+when : when = destroy, runs the provisioner on destroy, instead of creation 
+
+you can have multiple provisioners, in the same resource!
+
+on_failure = continue : Ignore the error the provisioner causes and just keep going
+
+on_failure = fail : Raise an error and stop applying. This is default. If this fails, the resource is tainted
+
+connection : connection blocks give the ssh details to the provisioner
+# Copies the file as the root user using SSH
+provisioner "file" {
+  source      = "conf/myapp.conf"
+  destination = "/etc/myapp.conf"
+
+  connection {
+    type     = "ssh"
+    user     = "root"
+    password = "${var.root_password}"
+    host     = "${var.host}"
+    port     =   4200
+    timeout = "30s"
+    script_path = "path"
+  }
+}
+
+provisioner types:
+  provisioner "file" {
+    source      = "conf/myapp.conf"
+    destination = "/etc/myapp.conf"
+  }
+
+  file : for copying files onto a new resource ( like a vm )
+
+  provisioner "file" {
+    content     = "ami used: ${self.ami}"
+    destination = "/tmp/file.log"
+  }
+
+remote exec:
+inline : A list of strings to be executed as commands
+script : the path to a script that needs to be executed
+scripts : An array of script paths
+
+resource "aws_instance" "web" {
+  # ...
+
+  provisioner "remote-exec" {
+    inline = [
+      "puppet apply",
+      "consul join ${aws_instance.web.private_ip}",
+    ]
+  }
+}
+
+----
 
 state
 terraform state list : List out the state of the current project
@@ -43,13 +245,7 @@ resource "aws_instance" "foo" {
   subnet_id = data.terraform_remote_state.vpc.outputs.subnet_id
 }
 
-terraform init -upgrade : upgrade providers to more recent version
-
-.terraform.lock.hcl : Contains a list of the providers and versions being used, like package.json
-
 terraform state mv : Tell terraform you've moved a config to another module's config, so that it doesn't destroy and recreate the resource
-
-$ terraform taint module.salt_master.aws_instance.salt_master : Taint resources inside of a module
 
 getting modules hosted on foreign domains
 module "consul" {
@@ -81,12 +277,48 @@ variable "ami" {
   })
 }
 
+================================================
+
+terraform console
+
+path.module : returns the filesystem path of the module where the expression is placed.
+path.root : returns  filesystem path of the root module of the configuration.
+path.cwd : returns the filesystem path of the current working directory. In normal use of Terraform this is the same as path.root 
+terraform.workspace : returns the name of the currently selected workspace.
+
+ternary:
+//you can filter the list with an if
+[for s in var.list : upper(s) if s != ""]
+
+//you can do a for, each key value pair in a map
+[for k, v in var.map : length(k) + length(v)]
+
+//s... groups together results that have the same key, in the resulting map
+{for s in var.list : substr(s, 0, 1) => s... if s != ""}
+
+dynamic blocks allow use for foreach on nested blocks ( blocks inside of your resource )
+
+resource "aws_elastic_beanstalk_environment" "tfenvtest" {
+  name                = "tf-test-name"
+  application         = "${aws_elastic_beanstalk_application.tftest.name}"
+  solution_stack_name = "64bit Amazon Linux 2018.03 v2.11.4 running Go 1.12.6"
+
+  dynamic "setting" {
+    for_each = var.settings
+    content {
+      namespace = setting.value["namespace"]
+      name = setting.value["name"]
+      value = setting.value["value"]
+    }
+  }
+}
+
+set( ... ) => a list of unique values
+
 ---
 
-string functions:
+format("Hello, %s!", "Ander") => hello, Ander
 
-format:
-> format("Hello, %s!", "Ander") => hello, Ander
 chomp => removes newline from string
 
 > formatlist("Hello, %s!", ["Valentina", "Ander", "Olivia", "Sam"])
@@ -97,18 +329,11 @@ chomp => removes newline from string
   "Hello, Sam!",
 ]
 
-> join(", ", ["foo", "bar", "baz"])
-foo, bar, baz
-
-
-apply regex to string, returning matching substrings
-regex(pattern, string)
-
-regexall(pattern, string)
-returns all matching substrings in an array
-
 > replace("1 + 2 + 3", "+", "-")
 1 - 2 - 3
+
+replace("a + b", "+", "-") : Effect?
+a - b : replace syntax:
 
 > split(",", "foo,bar,baz")
 [
@@ -116,9 +341,6 @@ returns all matching substrings in an array
   "bar",
   "baz",
 ]
-
-
-strrev(string), reverses string
 
 > substr("hello world", 1, 4)
 ello
@@ -356,184 +578,3 @@ toset(list) => convert a list to a set
 
 try evaluates all of its argument expressions in turn and returns the result of the first one that does not produce any errors.
 name   = tostring(try(local.raw_value.name, null))
-
-
----
-
-terraform console
-
-list type
-map is a map
-
-list must have all of the same type inside of it
-tuples can have any mixture of types inside of it
-
-multiline strings:
-<<EOT
-hello
-world
-EOT
-
-EOT could be anything, it's your chosie
-
-<<BEANS
-hello
-world
-BEANS
-
-<<THIS
-THIS
-this stuff is call Heredoc form
-
-%{} allows for more complex shit
-
-"Hello, %{ if var.name != "" }${var.name}%{ else }unnamed%{ endif }!"
-
-"%{ for ip in aws_instance.example.*.private_ip }"
-
-"%{ value ~ }" ~ strips the whitespace
-
-path.module : returns the filesystem path of the module where the expression is placed.
-path.root : returns  filesystem path of the root module of the configuration.
-path.cwd : returns the filesystem path of the current working directory. In normal use of Terraform this is the same as path.root 
-terraform.workspace : returns the name of the currently selected workspace.
-
-//this looks dope
-[for value in aws_instance.example: value.id] returns a list of all of the ids of each of the instances.
-
-&& is terraform and
-
-min(1,2,3) => call the min function with 1,2,3
-min([1,2,3]...) => expanding function arguments. Calls min with 1,2,3
-
-ternary:
-condition ? if_true : else_false
-
-[for s in var.list : upper(s)]
-
-
-//you can filter the list with an if
-[for s in var.list : upper(s) if s != ""]
-
-
-//you can do a for, each key value pair in a map
-[for k, v in var.map : length(k) + length(v)]
-
-
-//s... groups together results that have the same key, in the resulting map
-{for s in var.list : substr(s, 0, 1) => s... if s != ""}
-
-A splat is another name for the expressions that describe common for statements:
-var.list[*].id
-is just a disguised for statement
-
-var.list.*.id is legacy, do var.list[*].id
-
-dynamic blocks allow use for foreach on nested blocks ( blocks inside of your resource )
-
-resource "aws_elastic_beanstalk_environment" "tfenvtest" {
-  name                = "tf-test-name"
-  application         = "${aws_elastic_beanstalk_application.tftest.name}"
-  solution_stack_name = "64bit Amazon Linux 2018.03 v2.11.4 running Go 1.12.6"
-
-  dynamic "setting" {
-    for_each = var.settings
-    content {
-      namespace = setting.value["namespace"]
-      name = setting.value["name"]
-      value = setting.value["value"]
-    }
-  }
-}
-
-set( ... ) => a list of unique values
-
-The any statement acts like c#'s var
-list(any) states that you've got a list of a type to be decided later
-
-
----
-
-output:
-arguments:
-description - string 
-sensitive
-depends_on
-
-sensitive = true, suppresses this
-
----
-
-variable arguments:
-default : declare a default value for a variable : Allows the option to be optional on a module level
-sensitive :  Limits Terraform UI output when the variable is used in configuration. 
-
-variable types:
-basic types:
-    string
-    number
-    bool
-
-more types:
-    list(<type>)
-    set(<type>)
-    map(<type>)
-    object({ <name> = <value> })
-    tuple([<type>])
-
-validation:
-
-sensitive:
-if sensitive = true, terraform suppresses ui output that contains the value
-
-you can assign variables via a flag from the cli
-terraform apply -var="image_id=ami-abc123"
-
-If you're setting alot of them, you can use a .tfvars file
-terraform apply -var-file="testing.tfvars"
-
-a .tfvars file is basically a tf file that only contains assignements:
-image_id = "ami-abc123"
-availability_zone_names = [
-  "us-east-1a",
-  "us-west-1c",
-]
-
-files that are automatically loaded in:
-Files named exactly terraform.tfvars or terraform.tfvars.json.
-
-Terraform can also get vars from the environment:
-$ export TF_VAR_image_id=ami-abc123
-$ terraform plan
-
-----
-
-#################
-Resources
-#################
-
-resource blocks can use the depends_on meta argument
-if a resource block uses the depends on meta argument, reading of it's data source will be delayed
-
-resource blocks can use count and for_each too
-
-resource "my" "resource"{
-    lifecycle {
-        create_before_destroy = true //when doing apply, create the new resource before destroying the old one
-        prevent_destroy = true //prevent any deletion of a particular object
-        ignore_changes = true //prevent a resource from updating, when related data changes
-    }
-}
-
-meta properties:
-
-depends_on  :   specifies hidden dependencies
-provisioner :   for taking extra actions after resource creation
-connection  :   same as above
-
-resource "my" "resource"{
-    timeouts {
-        create = "60m"
-        delete = "2h"
-    }
-}

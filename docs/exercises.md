@@ -235,6 +235,203 @@ expected output:
 ]
 
 ====================================================================
+# Provisioners
+
+## A) Setting up a first provisioner
+* import the provider for null_resource
+* Setup a null_resource
+* set it up to use powershell
+* echo "content" into output.txt
+* $env:TF_CLI_ARGS_apply="--auto-approve" : Will add this, to approve only
+
+* Test : The output.txt file contains "content"
+
+## B) Using environment variables
+* Set two environment variables
+    * first = "this is first"
+    * second = "this is second"
+* Echo those to the file instead
+* Taint the resource and re-run apply
+
+* Test : The output file contains "this is first", "this is second"
+
+## C) Triggers and self
+* Create a local variable { file_suffix = "stuff" }
+* null_resource : setup the triggers = { "file_name" = var.input_variable }
+* self : Use self change the output file to output_${self.triggers[file_suffix]}.txt
+
+### C-Acceptance)
+* run apply once note that the file has been created
+* remove the output file
+
+* run apply again, notice the file hasn't been remade
+
+* change the local variable value
+* re-run apply, notice that it's now there with the new name
+
+## D) When
+* Create a second provisioner in the same block
+* Have it append "destroyed" to the output file, when resource is destroyed
+
+### D-A)
+* Run apply, note that the file only contains the lines from the first provisioner
+* Run destroy, note that the file now contains the words destroyed
+
+====================================================================
+
+# Azure
+--- anki: ---
+
+azurerm : Provider use?
+Azure resources provider : Name?
+
+$ azure login : Use?
+Authenticate az to use azure : Syntax?
+
+provider azurerm{ features{} } : wtf is this
+
+resource "azurerm_resource_group" "example" {
+    name     = "example"
+    location = "UK South"
+    tags = {
+        These are tags
+    }
+}
+
+azurerm_storage_account 
+name                     = "storageaccountname"
+resource_group_name      = azurerm_resource_group.example.name
+location                 = azurerm_resource_group.example.location
+account_tier             = "Standard"
+
+tags = {
+environment = "staging"
+}
+
+GRS : Geo-Redundant storage
+account_replication_type = "GRS"
+
+$ terraform state show resource.name : Use?
+Show that state of a particular resource : Syntax?
+
+$ terraform import azurerm_resource_group.name resource_id : Use?
+Import an azurerm_resource_group : Syntax?
+
+terraform import azurerm_resource_group.existing /subscriptions/<subId>/resourceGroups/helloworld : Use?
+Import an azurerm_resource_group, called helloworld : Syntax?
+
+
+--- exercises ---
+
+## A) Creating an RG
+* provider azurerm {}
+* az login
+* subscription?
+
+* create a resource group
+    * set the tags
+
+* destroy that rg
+
+
+* test : Run apply : There's an RG in the portal, with tags, set to uk south
+
+
+## B) The naming module:
+* Import the naming module
+* Use it to generate a name for a storage account
+* Output that name
+
+module "naming_storage_account" {
+  source = "github.com/Azure/terraform-azurerm-naming"
+  suffix = ["rating", "panel", var.env_name, var.location_short]
+}
+
+output "names"{
+    value = {
+        name : module.naming_storage_account.storage_account.name
+        unique : module.naming_storage_account.storage_account.name_unique
+    }
+}
+
+## C) Using an existing rg, to put a storage account into
+* create a resource group in the portal
+
+* data : Read from an existing rg
+
+* Use the naming thing
+* put a storage container in The rg
+
+* Naming: give it a unique name
+
+* test : terraform state list - get the name, check it's in the portal
+
+## D) Queues:
+* put a queue in the storage account
+
+resource "azurerm_storage_queue" "queue" {
+  name                 = var.storage_queue_name
+  storage_account_name = azurerm_storage_account.storage_account.name
+  depends_on           = [azurerm_storage_account.storage_account]
+}
+
+* Get the name of the queue via : terraform state show azurerm_storage_queue.queue_name
+
+* test : terraform state list - get the name, check it's in the portal
+
+## E) Import and teardown
+
+* import the resource group that i've created in the portal
+* tear down everything
+
+resource "azurerm_resource_group" "existing"{
+    name = "hello_world"
+    location = "UK South" 
+}
+
+* test : The resource group that you made by hand, is no longer in the portal
+
+
+====================================================================
+Workspaces and backends
+
+Create the required shit for a backend ( storage account )
+Use naming
+
+new directory:
+* use the foreign state
+* create a st account 
+* destroy it
+
+Workspaces:
+* idk lololololololol
+
+
+
+====================================================================
+
+* STOP TRYING TO MAKE COMPLETE KATA SETS
+* INSTEAD MAKE SMALL MICRO EXERCISES, GROUP THEM, THEN MAKE KATA GROUPS
+
+Raw exercises
+
+* What do i need to do terraform azure
+* how do i login
+* how do i setup shit
+
+* create a resource group
+* create a storage account
+* Put a queue into that storage account
+
+* Use terraform to create the resources to make a backend
+* Setup a backend
+* Setup a workspace
+* Teardown workspaces and stuff
+
+
+====================================================================
+
+# Raw kata:
 
 ## A) use for_each to generate several similar files
 * Generate several files
@@ -250,28 +447,116 @@ expected output:
 ## B) Locals
 * do the above, but save the values for the file names into the locals block
 
-############# ############# ############# #############
-# MISSING ONE MORE RELEVENT THING         #############
-############# ############# ############# #############
-
-could tf vars be a relevent thing?
 
 ====================================================================
+
+====================================================================
+The remaining kata's i would like:
+* Not Azure related:
+    * Console play, using inbuilt functions
+    * CMD line state play
+    * Something else
+    * Something else
+
+* Azure:
+    * Workspaces and backends
+    * Setting up and using Remote state ( The terraform block, not the backend state stuff )
+    * Something that requires the use of depends_on
+    * Creating some resource groups and putting shit into them
+
 ====================================================================
 
 filesystem
-state
 
 path.module
 path.root
 path.cwd
 
+# CLI Stuff:
+
+$ terraform graph 
+Looks fucking dope
+
 terraform state list
 terraform state in general
+terraform state list, mv, rm
+terraform state show
 
-====================================================================
+================
+workspace setup
+$ terraform workspace list      
+$ terraform workspace select    terraform show
+$ terraform workspace new       
+$ terraform workspace show      $env:TF_CLI_ARGS_apply="--auto-approve" : Will add this, to approve only
 
-## a) Provisioners
-* use a provisioner
+# Workspaces and backend:
+Create a workspace
+Set the backend to be azurerm
+Create some azure stuff, using the remote backend state
+Then destroy it
+Try import :)?!
+================
 
-====================================================================
+fucking nice
+
+# Console
+Could make a kata around this, just having and editing a state, in a live manor
+
+
+terraform import:
+* This is for using an existing resource and importing it into your state, instead of making a resource from scratch
+* You do need the resource already in your config file
+
+//Merging 2 configs, for 3 different resources?
+> merge({a="b", c="d"}, {e="f", c="z"})
+
+can(expression)
+
+//you can filter the list with an if
+[for s in var.list : upper(s) if s != ""]
+
+== Stuff gab used ==
+concat(string, [ string array ]) : gab's used it
+can(coalesce(var.naming_suffix...))
+====================
+
+//Dynamic blocks
+resource "aws_elastic_beanstalk_environment" "tfenvtest" {
+  dynamic "setting" {
+    for_each = var.settings
+    content {
+      namespace = setting.value["namespace"]
+      name = setting.value["name"]
+      value = setting.value["value"]
+    }
+  }
+}
+
+you can assign variables via a flag from the cli
+terraform apply -var="image_id=ami-abc123"
+
+If you're setting alot of them, you can use a .tfvars file
+terraform apply -var-file="testing.tfvars"
+
+a .tfvars file is basically a tf file that only contains assignements:
+image_id = "ami-abc123"
+availability_zone_names = [
+  "us-east-1a",
+  "us-west-1c",
+]
+
+files that are automatically loaded in:
+Files named exactly terraform.tfvars or terraform.tfvars.json.
+
+$ terraform apply -target resource.name[0]
+$ terraform fmt 
+
+Outputs the visual dependency graph of Terraform resources represented by the configuration in the current working directory.
+$ terraform graph
+
+============================================================
+== Things that are on the certified exam ==
+Verbose logging:
+Given a scenario: choose when to enable verbose logging and what the outcome/value is
+$ terraform validate
+
