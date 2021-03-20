@@ -280,79 +280,28 @@ expected output:
 ====================================================================
 
 # Azure
---- anki: ---
-
-azurerm : Provider use?
-Azure resources provider : Name?
-
-$ azure login : Use?
-Authenticate az to use azure : Syntax?
-
-provider azurerm{ features{} } : wtf is this
-
-resource "azurerm_resource_group" "example" {
-    name     = "example"
-    location = "UK South"
-    tags = {
-        These are tags
-    }
-}
-
-azurerm_storage_account 
-name                     = "storageaccountname"
-resource_group_name      = azurerm_resource_group.example.name
-location                 = azurerm_resource_group.example.location
-account_tier             = "Standard"
-
-tags = {
-environment = "staging"
-}
-
-GRS : Geo-Redundant storage
-account_replication_type = "GRS"
-
-$ terraform state show resource.name : Use?
-Show that state of a particular resource : Syntax?
-
-$ terraform import azurerm_resource_group.name resource_id : Use?
-Import an azurerm_resource_group : Syntax?
-
-terraform import azurerm_resource_group.existing /subscriptions/<subId>/resourceGroups/helloworld : Use?
-Import an azurerm_resource_group, called helloworld : Syntax?
-
-
---- exercises ---
-
-## A) Creating an RG
-* provider azurerm {}
-* az login
+## A) Creating a RG
+* Import the azure provider
+* Allow the az tool to login
 * subscription?
-
 * create a resource group
-    * set the tags
+    * call it hello_azure
+    * set the tag "hello" to "azure"
 
+* test : Run apply : Check the portal
+    * there's an RG called hello_azure
+    * there's a tag called "hello" with a value of "azure"
+    * The location is uk south
+    
 * destroy that rg
-
-
-* test : Run apply : There's an RG in the portal, with tags, set to uk south
 
 
 ## B) The naming module:
 * Import the naming module
 * Use it to generate a name for a storage account
-* Output that name
-
-module "naming_storage_account" {
-  source = "github.com/Azure/terraform-azurerm-naming"
-  suffix = ["rating", "panel", var.env_name, var.location_short]
-}
-
-output "names"{
-    value = {
-        name : module.naming_storage_account.storage_account.name
-        unique : module.naming_storage_account.storage_account.name_unique
-    }
-}
+* Output : Array
+    * A name
+    * A name that's unique
 
 ## C) Using an existing rg, to put a storage account into
 * create a resource group in the portal
@@ -369,12 +318,6 @@ output "names"{
 ## D) Queues:
 * put a queue in the storage account
 
-resource "azurerm_storage_queue" "queue" {
-  name                 = var.storage_queue_name
-  storage_account_name = azurerm_storage_account.storage_account.name
-  depends_on           = [azurerm_storage_account.storage_account]
-}
-
 * Get the name of the queue via : terraform state show azurerm_storage_queue.queue_name
 
 * test : terraform state list - get the name, check it's in the portal
@@ -382,12 +325,8 @@ resource "azurerm_storage_queue" "queue" {
 ## E) Import and teardown
 
 * import the resource group that i've created in the portal
-* tear down everything
 
-resource "azurerm_resource_group" "existing"{
-    name = "hello_world"
-    location = "UK South" 
-}
+* tear down everything
 
 * test : The resource group that you made by hand, is no longer in the portal
 
