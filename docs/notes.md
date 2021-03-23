@@ -1,66 +1,9 @@
 # CLI
 
-Show all resources made in the current project
-$ terraform state list
-
-Show the values for a particular resource
-$ terraform state show resource.name
-
-The terraform refresh command is used to reconcile the state Terraform knows about (via its state file) with the real-world infrastructure. This can be used to detect any drift from the last-known state, and to update the state file.
-
-$ terraform state mv
-// The example below renames the packet_device resource named worker to helper:
-$ terraform state mv 'packet_device.worker' 'packet_device.helper'
-
-The terraform state mv command is used to move items in a Terraform state. This command can move single resources, single instances of a resource, entire modules, and more. This command can also move items to a completely different state file, enabling efficient refactoring.
-
-The example below removes the packet_device resource named worker:
-$ terraform state rm 'packet_device.worker'
-
-$ terraform state replace-provider [options] FROM_PROVIDER_FQN TO_PROVIDER_FQN
-
-=======================================================
-
-$ terraform workspace list      : command is used to list all existing workspaces.
-$ terraform workspace select    : command is used to choose a different workspace to use for further operations.
-$ terraform workspace new       : command is used to create a new workspace.
-$ terraform workspace show      : command is used to output the current workspace.
-$ terraform workspace delete [OPTIONS] NAME [DIR]   : The terraform workspace delete command is used to delete an existing workspace.
-
-=========================================================
-
 $ terraform providers schema -json : Output the schema of the resources from a provider
 Useful for seeing the interfaces of stuff
 
 Env variables:
-
-export TF_LOG= : disable logging
-
-export TF_LOG=TRACE : Enable logging
-
-export TF_LOG_PATH=./terraform.log : tells the log where to persist
-
-export TF_INPUT=0 : Forces all commands to run with the -input=false flag set
-
-env variables can be used to set tf vars:
-export TF_VAR_region=us-west-1
-export TF_VAR_varname=value
-
-=========================================================
-
-you can set which args are added onto every run
-TF_CLI_ARGS : Adds a flag ( e.g. TF_CLI_ARGS onto the end of every command )
-
-$env:TF_CLI_ARGS_apply="--auto-approve" : Will add this, to approve only
-
-export TF_WORKSPACE=your_workspace
-
-$env:TF_LOG="TRACE"
-
-
-resource "my_resource" "name" {}
-
-$ terraform import my_resource.name resource_descriptor
 
 ---
 
@@ -102,25 +45,6 @@ Remote state like this, is READONLY
 
 Backends determine where state is stored. For example, the local (default) backend stores state in a local JSON file on disk. 
 
-Workspaces:
-Workspaces are where your state is managed
-Each workspace has an associated backend
-the default backend is "local"
-
-Named workspaces allow conveniently switching between multiple instances of a single configuration within its single backend. They are convenient in a number of situations, but cannot solve all problems.
-
-A common use for multiple workspaces is to create a parallel, distinct copy of a set of infrastructure in order to test a set of changes before modifying the main production infrastructure.
-
-AzureRM : Azures' backend's name
-
-$ terraform workspace new name : Create a new work space
-
-$ terraform workspace select name : Select a terraform space
-
-value = "${terraform.workspace}" : Get access to the name of the current workspace
-
-$ terraform state pull : pull remote state and output it to stdout
-
 If supported by your backend, Terraform will lock your state for all operations that could write state. This prevents others from acquiring the lock and potentially corrupting your state.
 
 Backends determine only where the state is stored, the operations are run from the local machine
@@ -147,29 +71,6 @@ container_name = "tfstate"
 ---
 
 # Provisioners:
-
-provider : null - allows access to the null_resource
-null_resource : A resource that does nothing, good for provisioner practise
-
-Self : A provisioner can't refer to it's parent block, self does that
-
-resource "null_resource" "res"{
-    provisioner "local-exec"{
-        command = "echo $env:A >> file.txt"
-        interpreter = [ "powershell" , "-command" ]
-        environment = {
-            A = "beans"
-        }
-        working_dir = "place to be executed"
-    }
-}
-
-Where defined : Inside of any resource
-when ran : whenever the resource is created, changes to the provisioner are ignored until a recreate happens
-
-when : when = destroy, runs the provisioner on destroy, instead of creation 
-
-you can have multiple provisioners, in the same resource!
 
 on_failure = continue : Ignore the error the provisioner causes and just keep going
 
@@ -222,10 +123,6 @@ resource "aws_instance" "web" {
 }
 
 ----
-
-state
-terraform state list : List out the state of the current project
-
 terraform_remote_state is a built in provider for working with remote state
 
 data "terraform_remote_state" "vpc" {
@@ -276,6 +173,110 @@ variable "ami" {
     architecture = string
   })
 }
+
+
+======================================================================
+Leftover shit from the exercises file:
+
+filesystem
+
+path.module
+path.root
+path.cwd
+
+# CLI Stuff:
+
+$ terraform graph 
+Looks fucking dope
+
+================
+workspace setup
+$env:TF_CLI_ARGS_apply="--auto-approve" : Will add this, to approve only
+
+# Workspaces and backend:
+Create a workspace
+Set the backend to be azurerm
+Create some azure stuff, using the remote backend state
+Then destroy it
+Try import :)?!
+================
+
+fucking nice
+
+# Console
+Could make a kata around this, just having and editing a state, in a live manor
+
+
+terraform import:
+* This is for using an existing resource and importing it into your state, instead of making a resource from scratch
+* You do need the resource already in your config file
+
+//Merging 2 configs, for 3 different resources?
+> merge({a="b", c="d"}, {e="f", c="z"})
+
+can(expression)
+
+//you can filter the list with an if
+[for s in var.list : upper(s) if s != ""]
+
+== Stuff gab used ==
+concat(string, [ string array ]) : gab's used it
+can(coalesce(var.naming_suffix...))
+====================
+
+//Dynamic blocks
+resource "aws_elastic_beanstalk_environment" "tfenvtest" {
+  dynamic "setting" {
+    for_each = var.settings
+    content {
+      namespace = setting.value["namespace"]
+      name = setting.value["name"]
+      value = setting.value["value"]
+    }
+  }
+}
+
+you can assign variables via a flag from the cli
+terraform apply -var="image_id=ami-abc123"
+
+If you're setting alot of them, you can use a .tfvars file
+terraform apply -var-file="testing.tfvars"
+
+a .tfvars file is basically a tf file that only contains assignements:
+image_id = "ami-abc123"
+availability_zone_names = [
+  "us-east-1a",
+  "us-west-1c",
+]
+
+files that are automatically loaded in:
+Files named exactly terraform.tfvars or terraform.tfvars.json.
+
+$ terraform apply -target resource.name[0]
+$ terraform fmt 
+
+Outputs the visual dependency graph of Terraform resources represented by the configuration in the current working directory.
+$ terraform graph
+
+Remote state, maybe?
+
+data "terraform_remote_state" "conf"{
+    backend = "local"
+
+    config = {
+        path = "../tf_state/terraform.tfstate"
+    }   
+}
+
+output "test"{
+    value = data.terraform_remote_state.conf.outputs.container_name
+}
+
+============================================================
+== Things that are on the certified exam ==
+Verbose logging:
+Given a scenario: choose when to enable verbose logging and what the outcome/value is
+$ terraform validate
 
 ================================================
 

@@ -399,6 +399,41 @@ expected output:
 
 ====================================================================
 
+anki:
+
+
+## A) Setup and list state
+* Create 3 files, using count
+* Use list the state via the commandline
+* List out the state of the generated files
+* Show the full state of the first generated file
+
+* Test: Using terraform state show, i can see the state of the first generated file
+
+## B) Moving state
+
+* rename the resource in the main file - Do nothing else
+* Use state mv to move the old state into the new resource
+* run apply
+
+* Test: When i run terraform apply, not resources are made or deleted
+
+## C) Removing state
+* remove the state of one of the files
+* re-run terraform apply 
+
+* Test: When i run terraform apply, the resource is recreated
+
+## D) Moving state into a module:
+* Create a new directory, called mod
+* Delete the configs from the main file and move it into the module's main.tf
+* use terraform to move the state into the module
+* Run terraform init
+
+* Test: When i run terraform apply, nothing is created or deleted
+
+====================================================================
+
 * STOP TRYING TO MAKE COMPLETE KATA SETS
 * INSTEAD MAKE SMALL MICRO EXERCISES, GROUP THEM, THEN MAKE KATA GROUPS
 
@@ -420,121 +455,3 @@ expected output:
 
 
 ====================================================================
-
-====================================================================
-The remaining kata's i would like:
-* Not Azure related:
-    * Console play, using inbuilt functions
-    * CMD line state play
-    * Something else
-    * Something else
-
-====================================================================
-
-filesystem
-
-path.module
-path.root
-path.cwd
-
-# CLI Stuff:
-
-$ terraform graph 
-Looks fucking dope
-
-terraform state list
-terraform state in general
-terraform state list, mv, rm
-terraform state show
-
-================
-workspace setup
-$ terraform workspace list      
-$ terraform workspace select    terraform show
-$ terraform workspace new       
-$ terraform workspace show      $env:TF_CLI_ARGS_apply="--auto-approve" : Will add this, to approve only
-
-# Workspaces and backend:
-Create a workspace
-Set the backend to be azurerm
-Create some azure stuff, using the remote backend state
-Then destroy it
-Try import :)?!
-================
-
-fucking nice
-
-# Console
-Could make a kata around this, just having and editing a state, in a live manor
-
-
-terraform import:
-* This is for using an existing resource and importing it into your state, instead of making a resource from scratch
-* You do need the resource already in your config file
-
-//Merging 2 configs, for 3 different resources?
-> merge({a="b", c="d"}, {e="f", c="z"})
-
-can(expression)
-
-//you can filter the list with an if
-[for s in var.list : upper(s) if s != ""]
-
-== Stuff gab used ==
-concat(string, [ string array ]) : gab's used it
-can(coalesce(var.naming_suffix...))
-====================
-
-//Dynamic blocks
-resource "aws_elastic_beanstalk_environment" "tfenvtest" {
-  dynamic "setting" {
-    for_each = var.settings
-    content {
-      namespace = setting.value["namespace"]
-      name = setting.value["name"]
-      value = setting.value["value"]
-    }
-  }
-}
-
-you can assign variables via a flag from the cli
-terraform apply -var="image_id=ami-abc123"
-
-If you're setting alot of them, you can use a .tfvars file
-terraform apply -var-file="testing.tfvars"
-
-a .tfvars file is basically a tf file that only contains assignements:
-image_id = "ami-abc123"
-availability_zone_names = [
-  "us-east-1a",
-  "us-west-1c",
-]
-
-files that are automatically loaded in:
-Files named exactly terraform.tfvars or terraform.tfvars.json.
-
-$ terraform apply -target resource.name[0]
-$ terraform fmt 
-
-Outputs the visual dependency graph of Terraform resources represented by the configuration in the current working directory.
-$ terraform graph
-
-Remote state, maybe?
-
-data "terraform_remote_state" "conf"{
-    backend = "local"
-
-    config = {
-        path = "../tf_state/terraform.tfstate"
-    }   
-}
-
-output "test"{
-    value = data.terraform_remote_state.conf.outputs.container_name
-}
-
-============================================================
-== Things that are on the certified exam ==
-Verbose logging:
-Given a scenario: choose when to enable verbose logging and what the outcome/value is
-$ terraform validate
