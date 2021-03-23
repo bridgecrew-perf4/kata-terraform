@@ -235,13 +235,16 @@ expected output:
 ]
 
 ====================================================================
-# Provisioners
+# 5) Provisioners
 
 ## A) Setting up a first provisioner
 * import the provider for null_resource
 * Setup a null_resource
 * set it up to use powershell
 * echo "content" into output.txt
+* Set the environment variable, to auto approve every apply and apply only
+
+* Move this to anki
 * $env:TF_CLI_ARGS_apply="--auto-approve" : Will add this, to approve only
 
 * Test : The output.txt file contains "content"
@@ -256,9 +259,9 @@ expected output:
 * Test : The output file contains "this is first", "this is second"
 
 ## C) Triggers and self
-* Create a local variable { file_suffix = "stuff" }
+* Create a local variable { filename = "output.txt" }
 * null_resource : setup the triggers = { "file_name" = var.input_variable }
-* self : Use self change the output file to output_${self.triggers[file_suffix]}.txt
+* self : Use self change the output file to ${self.triggers[file_name]}
 
 ### C-Acceptance)
 * run apply once note that the file has been created
@@ -279,7 +282,7 @@ expected output:
 
 ====================================================================
 
-# Azure
+# 6) Azure
 ## A) Creating a RG
 * Import the azure provider
 * Allow the az tool to login
@@ -324,49 +327,80 @@ expected output:
 
 ## E) Import and teardown
 
+* convert the data resource group, to be a resource 
 * import the resource group that i've created in the portal
 
-* tear down everything
-
-* test : The resource group that you made by hand, is no longer in the portal
+* test : terraform apply : Does not create a new resource group
+* test : Terraform destroy => The resource group that you made by hand, is no longer in the portal
 
 
 ====================================================================
-Workspaces and backends
+# 7) Workspaces and backends
 
-Create the required shit for a backend ( storage account )
-Use naming
+## A) Setup azure, via terraform
+* Create a new directory, Call it tf_state
+* Create an rg => call it tf_state
+* put a storage account in that rg => call it unique, with jvh suffix
+* Create an azure_rm_storage_container
+* Invoke the apply
 
-new directory:
-* use the foreign state
-* create a st account 
-* destroy it
+* Test : I have a 
+    * storage_container, 
+    * in a storage account, 
+    * in a resource group
 
-Workspaces:
-* idk lololololololol
+## B) Use the stuff for the backend
+* create a new directory call it "working"
+* setup working to use azure as the backend
+* point that backend at the new storage account
 
+* Test: Go to the portal, check 
+    * rg, which has a
+    * st_account, which has a
+    * st_container, which has a 
+    * jake_state.tfstate file? (idk if this has been created yet)
 
+## C) Create something
+
+* Import the naming module
+* Just a simple RG, with a unique name from the naming module
+* Run apply
+* You've now created an RG, using the remote state - Check the rg is there
+
+* Create a third directory : Call it state_check
+* Set it up to use the foreign state
+* $ terraform init
+* do a state pull
+* check the state
+
+* Test: 
+    * pull the state, in a third directory, 
+    * should see the rg, with the given name
+
+## D) Use workspaces to create something AGAIN
+* Go back to the "working" director
+* Add the workspace name to the naming module's prefixes
+* Create the new workspace "pog"
+
+* test : Run apply, apply succeeds
+* test : Check in the portal, you now have 2 resource groups created by the "working" directory
+* test : Go to check_state
+    * check that the default state is still there
+    * check that the pog state is now there too
+
+## E) Tear it down, piece by piece
+* Fully teardown the stuff using foreign state:
+    * Move to the state_check directory, from here:
+        * Tear down pog
+        * delete pog
+        * Tear down default
+
+    * Tear down the state container
 
 ====================================================================
 
 * STOP TRYING TO MAKE COMPLETE KATA SETS
 * INSTEAD MAKE SMALL MICRO EXERCISES, GROUP THEM, THEN MAKE KATA GROUPS
-
-Raw exercises
-
-* What do i need to do terraform azure
-* how do i login
-* how do i setup shit
-
-* create a resource group
-* create a storage account
-* Put a queue into that storage account
-
-* Use terraform to create the resources to make a backend
-* Setup a backend
-* Setup a workspace
-* Teardown workspaces and stuff
-
 
 ====================================================================
 
@@ -377,8 +411,6 @@ Raw exercises
 
 * Create    :   local_file  :   Create 3 local_files, using one resource block, called "first.txt", "second.txt", "third.txt"
 * Output    :   local_file  :   Output the path of the file called "second.txt"
-
-### A) Acceptance
 * Given that i have run terraform apply
 * When i take a look at the directory
 * I can see 3 different files, all with different content
@@ -396,12 +428,6 @@ The remaining kata's i would like:
     * CMD line state play
     * Something else
     * Something else
-
-* Azure:
-    * Workspaces and backends
-    * Setting up and using Remote state ( The terraform block, not the backend state stuff )
-    * Something that requires the use of depends_on
-    * Creating some resource groups and putting shit into them
 
 ====================================================================
 
@@ -493,9 +519,22 @@ $ terraform fmt
 Outputs the visual dependency graph of Terraform resources represented by the configuration in the current working directory.
 $ terraform graph
 
+Remote state, maybe?
+
+data "terraform_remote_state" "conf"{
+    backend = "local"
+
+    config = {
+        path = "../tf_state/terraform.tfstate"
+    }   
+}
+
+output "test"{
+    value = data.terraform_remote_state.conf.outputs.container_name
+}
+
 ============================================================
 == Things that are on the certified exam ==
 Verbose logging:
 Given a scenario: choose when to enable verbose logging and what the outcome/value is
 $ terraform validate
-
