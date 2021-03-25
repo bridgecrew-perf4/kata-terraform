@@ -1,0 +1,17 @@
+anki notes
+
+Arg field : Required : it must be set in the config
+Arg field : Default : 
+Arg field : Computed : generated later
+
+terraform's update event : Trigger?
+When a change happens to main.tf, then terraform apply is ran : Triggers what?
+
+to do
+* make http request
+* parse response into json
+* save value
+* return
+
+* terraform making a resource
+* terraform destroying a resource

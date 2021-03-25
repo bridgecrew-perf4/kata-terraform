@@ -399,8 +399,7 @@ expected output:
 
 ====================================================================
 
-anki:
-
+# 8) Messing with state
 
 ## A) Setup and list state
 * Create 3 files, using count
@@ -416,7 +415,7 @@ anki:
 * Use state mv to move the old state into the new resource
 * run apply
 
-* Test: When i run terraform apply, not resources are made or deleted
+* Test: When i run terraform apply, no resources are made or deleted
 
 ## C) Removing state
 * remove the state of one of the files

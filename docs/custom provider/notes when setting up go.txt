@@ -1,0 +1,36 @@
+Are these even needed?
+go env -w GO111MODULE=on : Set the Go111module env, to the correct default of on
+go get <package> : Install the package, set by the address
+
+Probably needed:
+go mod init <name_of_current_dir> : Sets the current dir as the root of the module
+go mod vendor : Create a vendor directory, that contains all the dependencies in it
+go get -u -v -f all : Install all dependencies
+
+$env:TF_LOG=1 : Tells terraform to log additional information when running terraform init
+
+$ENV:TF_LOG : Effect?
+Enable all TF_LOG settings : Syntax?
+
+# Changes i've made:
+* using this endpoint : https://jsonplaceholder.typicode.com/todos
+* Array of :
+    {   userId : int,
+        id : int,
+        title : string
+        completed : bool?
+    }
+
+
+# When buildling the provider:
+* first, do the installation stuff above
+* Second, define data resource
+    * create a file for it data_source_name.go, in the provider directory
+    * data_sources contain the schema and crud operations for the resource
+    * data resources are readonly 
+    * Schemas map the json response to a go object
+* third, add the need data source to the datasourcesmap
+    *   "hashicups_coffees":     dataSourceCoffees(),
+
+* The installation path should be 
+    * on windows : "$($env:appdata)/.terraform.d/plugins/hashicorp.com/edu/hashicups/0.2/amd64";
