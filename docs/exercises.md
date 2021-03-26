@@ -109,7 +109,7 @@
 ====================================================================
 
 
-3) Constraints, life cycles and tainting
+# 3) Constraints, life cycles and tainting
 
 ## A) Variables With constraints
 
