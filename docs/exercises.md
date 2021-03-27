@@ -1,6 +1,6 @@
 # Exercises
-
-====================================================================
+ 
+---
 
 # 1) Creating a local file  ( Ready for use )
 
@@ -44,7 +44,9 @@
 * I can see a new file
 * That contains the same content as the file "resources/template.txt"
 
-====================================================================
+
+---
+
 
 # 2) Module management
 
@@ -105,17 +107,19 @@
 * I can see:
     output : [ "file_0.txt", "file_1.txt", "file_2.txt", "file_3.txt" ]
 
-    
-====================================================================
+
+--- 
+
+
 3) Constraints, life cycles and tainting
 
 ## A) Variables With constraints
 
 * variable  :   number      :   number of files generated, must :
-                                    * be a number 
-                                    * prevent non numbers 
-                                    * prevent values greater than 4. 
-                                    * output "Input no more than 4." as the error
+    * be a number 
+    * prevent non numbers 
+    * prevent values greater than 4. 
+    * output "Input no more than 4." as the error
 
 * test      :   tf apply    :   Try and input 15 as the file_count, expect => "Input no more than 4." as the result
 
@@ -168,7 +172,9 @@
 * when i run terraform apply
 * I receive an error, preventing destroy
 
-====================================================================
+
+--- 
+
 
 # 4) Submodules and layers:
 
@@ -234,7 +240,10 @@ expected output:
   "SECOND_1.txt",
 ]
 
-====================================================================
+
+---
+
+
 # 5) Provisioners
 
 ## A) Setting up a first provisioner
@@ -243,9 +252,6 @@ expected output:
 * set it up to use powershell
 * echo "content" into output.txt
 * Set the environment variable, to auto approve every apply and apply only
-
-* Move this to anki
-* $env:TF_CLI_ARGS_apply="--auto-approve" : Will add this, to approve only
 
 * Test : The output.txt file contains "content"
 
@@ -280,7 +286,9 @@ expected output:
 * Run apply, note that the file only contains the lines from the first provisioner
 * Run destroy, note that the file now contains the words destroyed
 
-====================================================================
+
+---
+
 
 # 6) Azure
 ## A) Creating a RG
@@ -329,7 +337,9 @@ expected output:
 * test : Terraform destroy => The resource group that you made by hand, is no longer in the portal
 
 
-====================================================================
+---
+
+
 # 7) Workspaces and backends
 
 ## A) Setup azure, via terraform
@@ -394,7 +404,9 @@ expected output:
 
 * Test: Go to the portal, all 3 of the rg's are now gone
 
-====================================================================
+
+--- 
+
 
 # 8) Messing with state
 
@@ -428,27 +440,3 @@ expected output:
 * Run terraform init
 
 * Test: When i run terraform apply, nothing is created or deleted
-
-====================================================================
-
-* STOP TRYING TO MAKE COMPLETE KATA SETS
-* INSTEAD MAKE SMALL MICRO EXERCISES, GROUP THEM, THEN MAKE KATA GROUPS
-
-====================================================================
-
-# Raw kata:
-
-## A) use for_each to generate several similar files
-* Generate several files
-
-* Create    :   local_file  :   Create 3 local_files, using one resource block, called "first.txt", "second.txt", "third.txt"
-* Output    :   local_file  :   Output the path of the file called "second.txt"
-* Given that i have run terraform apply
-* When i take a look at the directory
-* I can see 3 different files, all with different content
-
-## B) Locals
-* do the above, but save the values for the file names into the locals block
-
-
-====================================================================
