@@ -286,7 +286,6 @@ expected output:
 ## A) Creating a RG
 * Import the azure provider
 * Allow the az tool to login
-* subscription?
 * create a resource group
     * call it hello_azure
     * set the tag "hello" to "azure"
@@ -298,7 +297,6 @@ expected output:
     
 * destroy that rg
 
-
 ## B) The naming module:
 * Import the naming module
 * Use it to generate a name for a storage account
@@ -307,27 +305,24 @@ expected output:
     * A name that's unique
 
 ## C) Using an existing rg, to put a storage account into
-* create a resource group in the portal
-
-* data : Read from an existing rg
-
-* Use the naming thing
-* put a storage container in The rg
-
-* Naming: give it a unique name
-
-* test : terraform state list - get the name, check it's in the portal
+* delete the output from earlier
+* create a resource group in the portal, call it "rg_jvh"
+* Use data to read details from that rg
+* put a storage account in The rg
+    * Use naming to give it a unique name with the "jvh" suffix
+    
+* test : terraform state list - get the name
+* test : check it's in the portal, in the premade resource group
 
 ## D) Queues:
 * put a queue in the storage account
 
-* Get the name of the queue via : terraform state show azurerm_storage_queue.queue_name
-
-* test : terraform state list - get the name, check it's in the portal
+* Test : Terraform state list - get the name, check it's in the portal
+* Test : Check it's in the portal, in the given storage account 
 
 ## E) Import and teardown
 
-* convert the data resource group, to be a resource 
+* convert the data resource_group, to be a resource resource_group
 * import the resource group that i've created in the portal
 
 * test : terraform apply : Does not create a new resource group
@@ -352,50 +347,52 @@ expected output:
 ## B) Use the stuff for the backend
 * create a new directory call it "working"
 * setup working to use azure as the backend
-* point that backend at the new storage account
+* Create a brand new resource group, using the naming module
 
-* Test: Go to the portal, check 
-    * rg, which has a
-    * st_account, which has a
-    * st_container, which has a 
-    * jake_state.tfstate file? (idk if this has been created yet)
+* Test : Go to the portal, check
+    * I have the brand new resource group
 
-## C) Create something
+* Test : The terraform.tfstate file is located in the .terraform directory
+* Test : Cat the state file, it ONLY contains information about the backend
+* Test : Terraform state list, shows the resource_group you just made
 
-* Import the naming module
-* Just a simple RG, with a unique name from the naming module
-* Run apply
-* You've now created an RG, using the remote state - Check the rg is there
+## C) Check the foreign state
 
 * Create a third directory : Call it state_check
 * Set it up to use the foreign state
 * $ terraform init
-* do a state pull
 * check the state
 
-* Test: 
-    * pull the state, in a third directory, 
-    * should see the rg, with the given name
+* Test: state show on the rg, should show the one you just made
 
 ## D) Use workspaces to create something AGAIN
-* Go back to the "working" director
+* Go back to the "working" directory
 * Add the workspace name to the naming module's prefixes
 * Create the new workspace "pog"
 
 * test : Run apply, apply succeeds
 * test : Check in the portal, you now have 2 resource groups created by the "working" directory
 * test : Go to check_state
-    * check that the default state is still there
-    * check that the pog state is now there too
+* test : In check_state, Listing the workspaces, shows default and pog
+* test : In check_state, list the state of the default workspace, only one RG is there
+* test : In check_state, list the state of the pog workspace, note only the newest rg is there
+
+## E) Tear down pog
+* Go back to working
+* Teardown pog
+* Delete the pog workspace
+
+* Test: In the portal, the pog rg is now delete
+* Test: When listing workspaces, in the "working" directory, only default is now shown
 
 ## E) Tear it down, piece by piece
 * Fully teardown the stuff using foreign state:
     * Move to the state_check directory, from here:
-        * Tear down pog
-        * delete pog
         * Tear down default
 
     * Tear down the state container
+
+* Test: Go to the portal, all 3 of the rg's are now gone
 
 ====================================================================
 
@@ -418,14 +415,15 @@ expected output:
 * Test: When i run terraform apply, no resources are made or deleted
 
 ## C) Removing state
-* remove the state of one of the files
+* remove the state of one of the files, using "$ terraform state" command
 * re-run terraform apply 
 
 * Test: When i run terraform apply, the resource is recreated
 
 ## D) Moving state into a module:
 * Create a new directory, called mod
-* Delete the configs from the main file and move it into the module's main.tf
+* Import that in the top level main.tf
+* Delete the configs from the main file and move it into the module ( mod ) main.tf
 * use terraform to move the state into the module
 * Run terraform init
 
