@@ -9,7 +9,7 @@
 * Action        : Where         What
 
 * Create        : Directory  :  "local_file_kata"
-* Create        : local_file :  "content.txt"
+* Create        : local_file :  "output.txt"
 * Set Attribute : local_file :  content "pog"
 
 ### Acceptance:
@@ -18,26 +18,31 @@
 * I can see:
     * content.txt : with the content "pog"
 
+* Test : After running apply:
+    * I have a directory called local_file
+    * I have a file called output.txt
+    * It has the content pog
+
 ## B) Make the content of the local file a variable
 * Declare       :   Variable   :    type:string
 * Set Attribute :   local_file :    Content Set to be the same as the variable
 
 ### Acceptance
-* Given that i've run terraform apply, 
-* Then given the string "Poggers"
-* When i take a look at the the content of the file
-* I can see it matches "Poggers"
+* Test: 
+    * Given i've run apply
+    * Given i've provided poggers as the arg
+    * The content of content.txt is now "poggers"
 
 ## C) Using existing file data
-* Create        :   local_file  :    Seperate from the one above
+* Resource      :   local_file  :    Seperate from the one above, called second.txt
 * Data          :   Data file   :    "resources/template.txt"
 * Set Attribute :   local_file  :    content to be the same as the data file
 
 ### Acceptance:
-* Given that i have run terraform apply
-* When i take a look at the files generated
-* I can see a new file
-* That contains the same content as the file "resources/template.txt"
+* Test :
+    * Given that i have run apply
+    * There's now a second file called "second.txt"
+    * It has the same content as "../resources/template.txt"
 
 
 ---
@@ -45,30 +50,20 @@
 
 # 2) Module management
 
-## Description
-* We're creating a module
-* That generates 2 files
-* Then uses count to generate those files
-* Then generating a variable number of files
-
-* Action        : Where         What
-
 ## A) Using a module to generate files
 * Create    : Directory             :  The modules container
 * Create    : module                :  x2 files, content irrelevent 
-* Output    : local_file.filename   :  x2 files, output their names to the calling module
+* Output    : local_file.filename   :  x2 files, output their names, individually, to the calling module
+* Output    : local_file.filename   :  x2 files, output their names, from the calling module too
 * Run       : From calling module   :  Run the module, from a parent main.tf, in the parent directory
 
 ### Acceptance:
-* Given that i have a module directory, and i'm in the directory above it
-* When i run terraform apply
+* Test : $terraform apply
 * I can see it generates 2 files:
-    * file_0.txt
-    * file_1.txt
+    * output/file_0.txt
+    * output/file_1.txt
 
-* Given that i have run terraform apply
-* When i run terraform output
-* I receive:
+* Test : $terraform apply, $terraform output, gives:
     * file_one = "output/file_0.txt"
     * file_two = "output/file_1.txt"
 
@@ -87,12 +82,11 @@
 ## C) Using variables and outputs
 * variable  :   module  :   Have a variable determine the number of generated files, call it file_count
 * Output    :   module  :   Output all filenames ( only ) together as an array
+* set var   :   main.tf :   Set the modules file_count value to 5
 
 ### Acceptance
-* Given that i've run terraform apply and set file_count to 4
-* When i run terraform output
-* I can see:
-    output : [ "file_0.txt", "file_1.txt", "file_2.txt", "file_3.txt" ]
+* Test: $terraform apply, $terraform output
+    output : files = [ "file_0.txt", "file_1.txt", "file_2.txt", "file_3.txt" ]
 
 ## D) Implement that module:
 
@@ -116,13 +110,11 @@
     * prevent values greater than 4. 
     * output "Input no more than 4." as the error
 
-* test      :   tf apply    :   Try and input 15 as the file_count, expect => "Input no more than 4." as the result
-
 ### Acceptance
-* Given i have run terraform apply
-* When i give it the value of 15 for the variable
-* I should see that i get the "Input no more than 4." error message.
-
+* Test : 
+    * $terraform apply
+    * provide it with 15
+    * Get an error : "Input no more than 4." error message.
 
 ## B) Running it again, preventing changes
 
@@ -134,17 +126,17 @@
 * test      :   check       :   Check that the first 2 files have different content to the second two
 
 ### Acceptance
-* Given i have ran apply the first time
-* and set content to "FIRST RUN"
-* and provided 2 for file_count
-* I can see that 2 files have been generated with the same content
+* Test : Set content to "FIRST RUN", $terraform apply, provide the value with 2
+    * 2 files are generated with "FIRST RUN"
 
-* Given that i have changed the content in the config to "SECOND RUN"
-* When i run apply a second time
-* and supply 4 as the file_count
-* I can see that there are now 4 files:
-    * 2 with the content "FIRST RUN"
-    * 2 with the content "SECOND RUN"
+* Test : Update content to "SECOND RUN", $terraform apply, provide the value with 4
+    * 2 files more files are generated with the value "SECOND RUN"
+
+* Test : Filename => Content
+    * output/0.txt => FIRST RUN
+    * output/1.txt => FIRST RUN
+    * output/2.txt => SECOND RUN
+    * output/3.txt => SECOND RUN
 
 ## C) Taint
 * config    :   local_file      :   Change the content to be "THIRD RUN"
@@ -152,20 +144,18 @@
 * test      :   tf apply        :   Check that the content of the first file is now "SECOND RUN", not "FIRST RUN"
 
 ### Acceptance
-* Given that i have tainted a file
-* When i run tf apply
-* I can see that the tainted file's values have changed
+
+* Test : $terraform apply
+    * The tainted file's contents are now "THIRD RUN"
 
 ## D) Deletion prevention
 * Config    :   local_file      :   Set the files to prevent being destroyed
 * taint     :   local_file      :   Taint the remaining file, that contains "FIRST RUN"
-
 * test      :   local_file      :   Run apply again => Expect to get a prevent destroy error
 
 ### Acceptance
-* Given that i have tainted the remaining file
-* when i run terraform apply
-* I receive an error, preventing destroy
+* Test : $ terraform taint, $ terraform apply
+    * There's now an error message, files aren't updated
 
 
 --- 
@@ -182,7 +172,7 @@ Sub mod)    submodule/main.tf
 * structure :   sub_module  :   create the submodule/main.tf
 * variable  :   sub_module  :   file_content, the content of the generated files
 * variable  :   sub_module  :   the prefix for the files
-* output    :   sub_module  :   output the file data
+* output    :   sub_module  :   output raw file objects ( names, permission, etc )
 * create    :   sub_module  :   2x Files, the generated files are in the directory "output", "output/prefix_fileindex.txt"
 
 * test  ->  run the sub_module, file_content = "test", prefix = "pre"
@@ -248,16 +238,22 @@ expected output:
 * echo "content" into output.txt
 * Set the environment variable, to auto approve every apply and apply only
 
-* Test : The output.txt file contains "content"
+### Acceptance
+
+* Test : $ terraform apply
+    * The output.txt file contains "content"
 
 ## B) Using environment variables
 * Set two environment variables
-    * first = "this is first"
-    * second = "this is second"
+    * first = "FIRST"
+    * second = "SECOND"
 * Echo those to the file instead
 * Taint the resource and re-run apply
 
-* Test : The output file contains "this is first", "this is second"
+### Acceptance
+
+* Test : $ terraform taint, $ terraform apply
+    * The output file contains "FIRST", "SECOND"
 
 ## C) Triggers and self
 * Create a local variable { filename = "output.txt" }
@@ -328,8 +324,15 @@ expected output:
 * convert the data resource_group, to be a resource resource_group
 * import the resource group that i've created in the portal
 
-* test : terraform apply : Does not create a new resource group
-* test : Terraform destroy => The resource group that you made by hand, is no longer in the portal
+### Acceptance:
+* test : $ terraform refresh, $ terraform state list
+    * The rg is now a resource
+
+* test : $ terraform apply 
+    * Does not create a new resource group
+
+* test : $ Terraform destroy 
+    * The resource group that you made by hand, is no longer in the portal
 
 
 ---
@@ -341,7 +344,7 @@ expected output:
 * Create a new directory, Call it tf_state
 * Create an rg => call it tf_state
 * put a storage account in that rg => call it unique, with jvh suffix
-* Create an azure_rm_storage_container
+* Create an azure_rm_storage_container => call it unique, with jvh suffix
 * Invoke the apply
 
 * Test : I have a 
@@ -407,7 +410,7 @@ expected output:
 
 ## A) Setup and list state
 * Create 3 files, using count
-* Use list the state via the commandline
+* Use list for the state via the commandline
 * List out the state of the generated files
 * Show the full state of the first generated file
 
@@ -419,19 +422,37 @@ expected output:
 * Use state mv to move the old state into the new resource
 * run apply
 
-* Test: When i run terraform apply, no resources are made or deleted
+* Test : $ Terraform state list 
+    * shows the resources being attributed to the renamed resource
+
+* Test: $ terraform apply
+    * no resources are made or deleted
 
 ## C) Removing state
 * remove the state of one of the files, using "$ terraform state" command
 * re-run terraform apply 
 
-* Test: When i run terraform apply, the resource is recreated
+* Test: $ terraform state list
+    * Shows the resource is now missing
+
+* Test: $ terraform apply 
+    * the resource is now recreated
 
 ## D) Moving state into a module:
 * Create a new directory, called mod
 * Import that in the top level main.tf
 * Delete the configs from the main file and move it into the module ( mod ) main.tf
+
+* terraform state list => Shows the state is still outside of the module
+
 * use terraform to move the state into the module
 * Run terraform init
 
-* Test: When i run terraform apply, nothing is created or deleted
+* Test: cat main.tf
+    * The only things in here are the provider and the module
+
+* Test: $ terraform apply
+    * nothing is created or deleted
+
+* Test: $ terraform state list
+    * Shows the state now in the module

@@ -17,3 +17,22 @@
 * I can see 3 different files, all with different content
 
 ====================================================================
+
+Import and plan:
+* go into the azure portal
+* create a complex object, with alot of configs ( azure_network_interface, or something )
+* create the config
+* Import it into terraform
+* Use terraform plan to check the differences between the config and reality
+* Update the config, until it matches reality
+
+* Test : $ terraform apply
+    * 0 Objects updated
+
+====================================================================
+# Little bits that don't constitute anything major:
+
+* for_each = toset([ array of items ])
+    * each.key
+
+====================================================================
