@@ -8,97 +8,81 @@ A set of self made set of kata. After reading through the docs, i pulled togethe
 
 # 1) Creating a local file  ( Ready for use )
 
-## A-Q) Create a local file
+## A) Create a local file
 
-* Action        : Where         What
-
-* Create        : Directory  :  "local_file_kata"
-* Create        : local_file :  "output.txt"
-* Set Attribute : local_file :  content "pog"
+* Create a local file resource
+* call It "output.txt"
+* give it the content : "Pog"
 
 ### Acceptance:
-* Given that i have run terraform apply
-* When i take a look at the generated files
-* I can see:
-    * content.txt : with the content "pog"
-
 * Test : After running apply:
-    * I have a directory called local_file
     * I have a file called output.txt
     * It has the content pog
 
 ## B) Make the content of the local file a variable
-* Declare       :   Variable   :    type:string
-* Set Attribute :   local_file :    Content Set to be the same as the variable
+* Declare a variable
+* Use that variable to set the value of the files contents
 
 ### Acceptance
-* Test: 
-    * Given i've run apply
-    * Given i've provided poggers as the arg
-    * The content of content.txt is now "poggers"
+* Test: $ terraform apply
+    * Give it the string "New content"
+    * Check that the content of the file, matches the string
 
 ## C) Using existing file data
-* Resource      :   local_file  :    Seperate from the one above, called second.txt
-* Data          :   Data file   :    "resources/template.txt"
-* Set Attribute :   local_file  :    content to be the same as the data file
+* Create a local_file resource, call it "second.txt"
+* Create a local_file data source -> pointed at "resources/template.txt"
+* Set the contents of second.txt, equal to that of the data source
 
 ### Acceptance:
-* Test :
-    * Given that i have run apply
-    * There's now a second file called "second.txt"
+* Test : $ terraform apply
+    * There's a new file, called "second.txt"
     * It has the same content as "../resources/template.txt"
-
 
 ---
 
 
 # 2) Module management
 
+## File structure
+./module/main.tf
+./main.tf
+
 ## A) Using a module to generate files
-* Create    : Directory             :  The modules container
-* Create    : module                :  x2 files, content irrelevent 
-* Output    : local_file.filename   :  x2 files, output their names, individually, to the calling module
-* Output    : local_file.filename   :  x2 files, output their names, from the calling module too
-* Run       : From calling module   :  Run the module, from a parent main.tf, in the parent directory
+* Create a directory, called module
+* Have it create 2 files, with "content" as the content
+* Output their names as individual outputs
+* Call the module, from the top level main.tf file
+* Output their names from here too
 
 ### Acceptance:
-* Test : $terraform apply
-* I can see it generates 2 files:
-    * output/file_0.txt
-    * output/file_1.txt
+* Test : $terraform apply ( from top level directory )
+    * I can see it generates 2 files:
+        * output/file_0.txt
+        * output/file_1.txt
 
-* Test : $terraform apply, $terraform output, gives:
+* Test : $terraform output
     * file_one = "output/file_0.txt"
     * file_two = "output/file_1.txt"
 
 ## B) using count to generate several files
-* Implement Count   :   module.local_files  :   Implement count, on one resource, to generate your two files
-* Create            :   local_file          :   Generate the files file_0.txt and file_1.txt
-* Output            :   local_file.filename :   Output the names of the 2 files, individually
+* Use count to generate the two files
+* Output their names, exactly like before
 
 ### Acceptance
-* Given i've run terraform apply
-* When i take a look at the generated outputs
-* I can see:
-    * file_one = "output/file_0.txt"
-    * file_two = "output/file_1.txt"
+* test : $ terraform apply
+    * There's no changes, the files and outputs are still:
+        * file_one = "output/file_0.txt"
+        * file_two = "output/file_1.txt"
 
 ## C) Using variables and outputs
-* variable  :   module  :   Have a variable determine the number of generated files, call it file_count
-* Output    :   module  :   Output all filenames ( only ) together as an array
-* set var   :   main.tf :   Set the modules file_count value to 5
+* Create a variable in the module, called file_count
+* Have the number of generated files be equal to file_count
+* Output an array of the generated files NAMES only
+* Set the variable to 4, from the top level main.tf file
 
 ### Acceptance
 * Test: $terraform apply, $terraform output
-    output : files = [ "file_0.txt", "file_1.txt", "file_2.txt", "file_3.txt" ]
-
-## D) Implement that module:
-
-* Create    :   main.tf :   Create the top level main.tf
-* module    :   main.tf :   Invoke the /module
-* output    :   main.tf :   have the new main.tf, output the modules outputs
-* I can see:
-    output : [ "file_0.txt", "file_1.txt", "file_2.txt", "file_3.txt" ]
+    * files = [ "file_0.txt", "file_1.txt", "file_2.txt", "file_3.txt" ]
 
 
 --- 
