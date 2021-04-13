@@ -92,44 +92,52 @@ A set of self made set of kata. After reading through the docs, i pulled togethe
 
 ## A) Variables With constraints
 
-* variable  :   number      :   number of files generated, must :
+* Create a variable, That must:
+    * be called file_count
     * be a number 
     * prevent non numbers 
     * prevent values greater than 4. 
     * output "Input no more than 4." as the error
 
 ### Acceptance
-* Test : 
-    * $terraform apply
-    * provide it with 15
+* Test : terraform apply --var "file_count=15"
     * Get an error : "Input no more than 4." error message.
+
+* Test : terraform apply --var "file_count=hello"
+    * Get an error : "file_count : a number is required" error message.
+
+* Test : terraform apply --var "file_count=4"
+    * No errors
 
 ## B) Running it again, preventing changes
 
-* config    :   local_file  :   set the content to be "FIRST RUN"
-* config    :   local_file  :   prevent the files from having their content changed, on subsequent runs
-* create    :   tf apply    :   2x local_file, by using the above variable as the count
-* edit      :   local_file  :   change the content value to "SECOND RUN"
-* create    :   tf apply    :   Set the variable to 4
-* test      :   check       :   Check that the first 2 files have different content to the second two
+* Create a local_file
+    * set content to be "FIRST RUN"
+    * prevent file from having content changed on subsequent runs
+    * Uses file_count to generate specified number of files
+
+* Run $ terraform apply, set file_count to 2
+
+* Change the content to be "SECOND RUN"
 
 ### Acceptance
-* Test : Set content to "FIRST RUN", $terraform apply, provide the value with 2
-    * 2 files are generated with "FIRST RUN"
+* test : $ terraform apply --var "file_count=4"
+    * Filename => Content
+        * output/0.txt => FIRST RUN
+        * output/1.txt => FIRST RUN
+        * output/2.txt => SECOND RUN
+        * output/3.txt => SECOND RUN
 
-* Test : Update content to "SECOND RUN", $terraform apply, provide the value with 4
-    * 2 files more files are generated with the value "SECOND RUN"
-
-* Test : Filename => Content
-    * output/0.txt => FIRST RUN
-    * output/1.txt => FIRST RUN
-    * output/2.txt => SECOND RUN
-    * output/3.txt => SECOND RUN
+* Test : Set content to be "FAIL", $ terraform apply --var "file_count=4"
+    * Content remains the same as above
 
 ## C) Taint
-* config    :   local_file      :   Change the content to be "THIRD RUN"
-* taint     :   local_file[0]   :   Taint one of the files with the "FIRST RUN" content
-* test      :   tf apply        :   Check that the content of the first file is now "SECOND RUN", not "FIRST RUN"
+* Update the content to be "THIRD RUN"
+* Taint first file that was made
+
+* Test : $ terraform apply --var "file_count=4"
+    * One file destroyed and remade
+    * The tainted file has had it's content changed to "THIRD RUN"
 
 ### Acceptance
 
@@ -137,13 +145,12 @@ A set of self made set of kata. After reading through the docs, i pulled togethe
     * The tainted file's contents are now "THIRD RUN"
 
 ## D) Deletion prevention
-* Config    :   local_file      :   Set the files to prevent being destroyed
-* taint     :   local_file      :   Taint the remaining file, that contains "FIRST RUN"
-* test      :   local_file      :   Run apply again => Expect to get a prevent destroy error
+* Update the config to prevent files from being destroyed
+* Taint the remaining "FIRST RUN" file
 
 ### Acceptance
-* Test : $ terraform taint, $ terraform apply
-    * There's now an error message, files aren't updated
+* Test: $ terraform apply --var "file_count=4"
+    * Error - No files updated
 
 
 --- 
