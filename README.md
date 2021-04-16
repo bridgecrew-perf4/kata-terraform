@@ -164,33 +164,26 @@ Module)     module/main.tf
 Sub mod)    submodule/main.tf
 
 ## A) Create the sub_module:
-* structure :   sub_module  :   create the submodule/main.tf
-* variable  :   sub_module  :   file_content, the content of the generated files
-* variable  :   sub_module  :   the prefix for the files
-* output    :   sub_module  :   output raw file objects ( names, permission, etc )
-* create    :   sub_module  :   2x Files, the generated files are in the directory "output", "output/prefix_fileindex.txt"
-
-* test  ->  run the sub_module, file_content = "test", prefix = "pre"
-* check ->  2 files generated, content = "test", names pre_0.txt, pre_1.txt
-* check ->  output -> [ file_1, file_2 ]
+* create the sub_module/main.tf
+* Create a variable, called file_content, of type string
+* Create a variable, called prefix, of type string
+* Create 2 file resources, called output/prefix_fileindex.txt, with content file_content
+* Output the raw files, as an array
 
 ## B) Create the module:
 
-* local     :   module      :   create a local variable, that's a map, containing the modules values
-* structure :   module      :   create the module directory
-* create    :   module      :   invoke the sub module twice, using a for_each on the above local
-* output    :   module      :   output the files = [ module_a.files, module_b.files ]
-
-* test  -> Output directory contains 4 files. 
-* output -> terraform output outputs [ [ prefix_one_0.txt, prefix_one_1.txt ], [ prefix_two_0.txt, prefix_two_1.txt ] ]
+* Create the module/main.tf file
+* Create a local, that's a map, containing the modules values
+* Invoke the submodule, twice, using a for_each on the local map
+* Output all the files created, like such : files = [ module_a.files, module_b.files ]
 
 ## C) Invoke the module
 
-* structure :   main        :   create the top level main.tf
-* module    :   main        :   Invoke the module
-* output    :   main        :   output file_paths)      Flatten the list, then splat it to display only the full output path
-* output    :   main        :   output files_as_map)    Turn the flat list to generate a map { filename : content }
-* output    :   main        :   output just_names)      Turn the flat list, into a list of just file names, without the directory
+* Create the top level main.tf
+* Invoke the module
+* Create an output, called paths, that shows just the file names, in a single flat array
+* Create an output, called content, that shows { filename : content }, as a single flat array
+* Create an output, called names, that shows just the file name without the directory ( file.txt, rather than output/file.txt )
 
 ## Acceptance:
 
@@ -229,6 +222,7 @@ expected output:
 ## A) Setting up a first provisioner
 * import the provider for null_resource
 * Setup a null_resource
+* Setup a provisioner
 * set it up to use powershell
 * echo "content" into output.txt
 * Set the environment variable, to auto approve every apply and apply only
@@ -239,7 +233,7 @@ expected output:
     * The output.txt file contains "content"
 
 ## B) Using environment variables
-* Set two environment variables
+* Set two environment variables, in the provisioner
     * first = "FIRST"
     * second = "SECOND"
 * Echo those to the file instead
@@ -269,9 +263,11 @@ expected output:
 * Have it append "destroyed" to the output file, when resource is destroyed
 
 ### D-A)
-* Run apply, note that the file only contains the lines from the first provisioner
-* Run destroy, note that the file now contains the words destroyed
+* Test : $ terraform apply:
+    * The output file only contains "first, second"
 
+* Test: $ terraform destroy:
+    * The output file now contains "first, second, destroyed"
 
 ---
 
@@ -305,14 +301,20 @@ expected output:
 * put a storage account in The rg
     * Use naming to give it a unique name with the "jvh" suffix
     
-* test : terraform state list - get the name
-* test : check it's in the portal, in the premade resource group
+* test : $terraform state list 
+    * get the name of the generated lists
+
+* test : check it's in the portal
+    * in the premade resource group
 
 ## D) Queues:
 * put a queue in the storage account
 
-* Test : Terraform state list - get the name, check it's in the portal
-* Test : Check it's in the portal, in the given storage account 
+* Test : $ Terraform state list
+    * Get the name, check it's in the portal
+
+* Test : Check the portal:
+    * It's in the storage account
 
 ## E) Import and teardown
 
