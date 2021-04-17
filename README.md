@@ -342,24 +342,33 @@ expected output:
 * Create an rg => call it tf_state
 * put a storage account in that rg => call it unique, with jvh suffix
 * Create an azure_rm_storage_container => call it unique, with jvh suffix
+* Output the names of all of these, as outputs
 * Invoke the apply
 
-* Test : I have a 
+* Test : $ terraform apply, creates:
     * storage_container, 
     * in a storage account, 
     * in a resource group
+
+* Test : $ Terraform output
+    * resource_group_name = ""
+    * storage_account_name = ""
+    * storage_container_name = ""
 
 ## B) Use the stuff for the backend
 * create a new directory call it "working"
 * setup working to use azure as the backend
 * Create a brand new resource group, using the naming module
 
-* Test : Go to the portal, check
+* Test : $ terraform apply:
     * I have the brand new resource group
+
+* Test : $ Terraform state list
+    * shows the resource_group you just made
 
 * Test : The terraform.tfstate file is located in the .terraform directory
 * Test : Cat the state file, it ONLY contains information about the backend
-* Test : Terraform state list, shows the resource_group you just made
+
 
 ## C) Check the foreign state
 
@@ -368,19 +377,32 @@ expected output:
 * $ terraform init
 * check the state
 
-* Test: state show on the rg, should show the one you just made
+* Test: $ terraform state list 
+    * Shows a resource group, that was made in the previous step
+
+* Test: $ terraform state show <the rg>
+    * Shows the details of the previously made rg
 
 ## D) Use workspaces to create something AGAIN
 * Go back to the "working" directory
 * Add the workspace name to the naming module's prefixes
 * Create the new workspace "pog"
+* Select it
 
-* test : Run apply, apply succeeds
-* test : Check in the portal, you now have 2 resource groups created by the "working" directory
-* test : Go to check_state
-* test : In check_state, Listing the workspaces, shows default and pog
-* test : In check_state, list the state of the default workspace, only one RG is there
-* test : In check_state, list the state of the pog workspace, note only the newest rg is there
+* test : $ terraform apply
+    * Succeeds in creating a new resource group
+    * There's 2 resource groups in the portal, made from this file
+    * The new resource group has "pog" in it's name
+
+* test: In check_state: $ terraform workspace list
+    * Shows default
+    * Shows pog
+
+* test : $ terraform state list:
+    * Shows one rg
+
+* test : $ terraform workspace select pog, $ terraform state list
+    * Shows just one rg
 
 ## E) Tear down pog
 * Go back to working
@@ -417,7 +439,6 @@ expected output:
 
 * rename the resource in the main file - Do nothing else
 * Use state mv to move the old state into the new resource
-* run apply
 
 * Test : $ Terraform state list 
     * shows the resources being attributed to the renamed resource
@@ -439,17 +460,14 @@ expected output:
 * Create a new directory, called mod
 * Import that in the top level main.tf
 * Delete the configs from the main file and move it into the module ( mod ) main.tf
-
-* terraform state list => Shows the state is still outside of the module
-
 * use terraform to move the state into the module
 * Run terraform init
 
-* Test: cat main.tf
+* test : $ terraform state list
+    * Shows the state is now in the module
+
+* Test: $ cat main.tf
     * The only things in here are the provider and the module
 
 * Test: $ terraform apply
     * nothing is created or deleted
-
-* Test: $ terraform state list
-    * Shows the state now in the module
